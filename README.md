@@ -4,61 +4,22 @@ A heuristic command suggestion system for zsh.
 
 ## Installation
 
-```
-function hbt_start() {
-	pid=$(pgrep hbtsrv)
-	if [ -z $pid ]; then
-			echo "starting hbt, you can stop it with: hbt_stop"
-			nohup ~/Repositories/hbt/bin/hbtsrv 1234 ~/dotfiles/hbt >/dev/null 2>&1 &
-	fi
-}
-function hbt_stop() {
-	pid=$(pgrep hbtsrv)
-	if [ -z $pid ]; then
-		echo "already stopped"
-	else
-		echo "stopping"
-		kill -TERM $pid
-	fi
-}
+1. Download or build `hbt`
+2. Amend the environment variables in `zsh/hbt.zsh` to match where you store hbt (fancy the PATH?)
+3. Make sure that `zsh/hbt.zsh` is loaded by your shell.
 
-if [ -z $(pgrep hbtsrv) ]; then
-	#hbt_start
-fi
+## Usage
 
-#autoload -Uz add-zsh-hook
+The zsh bit of hbt talks to a locally spawned TCP server handled by a go binary.
+Hbt will track every command that you type and store it into a graph.
+Upon pressing TAB with an empty prompty buffer, it will try to hint at a good command, according to your typing history. Shrugs otherwise (seriously).
 
-function _hbt_track () {
-	echo "you run $1 at $(pwd)"
-}
+## Todo
 
-add-zsh-hook preexec _hbt_track
-
-# list dir with TAB, when there are only spaces/no text before cursor,
-# or complete words, that are before cursor only (like in tcsh)
-function _hbt_search () {
-	if [[ -z ${LBUFFER// } ]]; then
-		suggestion=testone
-		POSTDISPLAY="${suggestion#$BUFFER}"
-		_zsh_autosuggest_highlight_apply
-	else
-		 zle expand-or-complete-prefix;
-	fi
-}
-
-function _hbt_clear() {
-	if [[ -z ${LBUFFER// } ]]; then
-		unset POSTDISPLAY
-	else
-		zle backward-delete-char
-	fi
-}
-
-# https://unix.stackexchange.com/questions/289883/binding-key-shortcuts-to-shell-functions-in-zsh
-zle -N _hbt_search
-zle -N _hbt_clear
-
-bindkey '^I' _hbt_search
-bindkey '^?' _hbt_clear
-# bindkey ^h _hbt_search # ctrl+h
-```
+- [ ] Naive graph implementation
+- [ ] Create custom marshaller which supports cycles and correctly restores pointers
+- [ ] Tests
+- [ ] Migrate what can be migrated from zsh to go
+- [ ] Benchmarking
+- [ ] R/B tree implementation???
+- [ ] Partial path search
