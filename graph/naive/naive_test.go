@@ -1,15 +1,21 @@
 package naive
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNaive(t *testing.T) {
 	t.Run("Track", TestNaiveTrack)
 	t.Run("Hint", TestNaiveHint)
-	t.Run("SaveLoad", TestNaiveSaveLoad)
+	t.Run("Save", TestNaiveSave)
+	t.Run("Load", TestNaiveLoad)
 }
 
 func TestNaiveTrack(t *testing.T) {
@@ -88,6 +94,74 @@ func TestNaiveHint(t *testing.T) {
 	assert.Equal(t, cmd2, got, "two commands, cmd2 greater hits")
 }
 
-func TestNaiveSaveLoad(t *testing.T) {
+func TestNaiveSave(t *testing.T) {
+	runs := map[string]func(g *Graph){
+		"simple": func(g *Graph) {
+			g.Track("1", "dir1", "cmd1")
+		},
+		"cyclic_single": func(g *Graph) {
+			g.Track("1", "dir1", "cmd1")
+			g.Track("1", "dir1", "cmd2")
+		},
+		"cyclic_multi": func(g *Graph) {
+			g.Track("1", "dir1", "cmd1")
+			g.Track("1", "dir2", "cmd2")
+			g.Track("1", "dir1", "cmd3")
+		},
+	}
+	for name, setup := range runs {
+		t.Run(name, func(t *testing.T) {
+			g := NewGraph(10)
+			setup(g)
+			base := path.Join("testdata", name)
+			actualFile := base + "_actual.json"
+			err := g.Save(actualFile)
+			assert.NoError(t, err)
+			be, err := ioutil.ReadFile(base + ".json")
+			require.NoError(t, err)
+			var expected map[string]interface{}
+			err = json.Unmarshal(be, &expected)
+			require.NoError(t, err)
+			ba, err := ioutil.ReadFile(actualFile)
+			require.NoError(t, err)
+			var actual map[string]interface{}
+			err = json.Unmarshal(ba, &actual)
+			require.NoError(t, err)
+			if assert.EqualValues(t, expected, actual) {
+				err = os.Remove(actualFile)
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 
+func TestNaiveLoad(t *testing.T) {
+	runs := map[string]func(g *Graph){
+		"simple": func(g *Graph) {
+			g.Track("1", "dir1", "cmd1")
+		},
+		"cyclic_single": func(g *Graph) {
+			g.Track("1", "dir1", "cmd1")
+			g.Track("1", "dir1", "cmd2")
+		},
+		"cyclic_multi": func(g *Graph) {
+			g.Track("1", "dir1", "cmd1")
+			g.Track("1", "dir2", "cmd2")
+			g.Track("1", "dir1", "cmd3")
+		},
+	}
+	for name, setup := range runs {
+		t.Run(name, func(t *testing.T) {
+			expected := NewGraph(10)
+			setup(expected)
+			// Reset the walker property as it is not saved
+			for id := range expected.walkers {
+				delete(expected.walkers, id)
+			}
+			actual := NewGraph(10)
+			err := actual.Load(path.Join("testdata", name+".json"))
+			assert.NoError(t, err)
+			assert.EqualValues(t, expected, actual)
+		})
+	}
 }
