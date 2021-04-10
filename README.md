@@ -16,8 +16,11 @@ Upon pressing TAB with an empty prompty buffer, it will try to hint at a good co
 
 ## Todo
 
-- [ ] Naive graph implementation
-- [ ] Create custom marshaller which supports cycles and correctly restores pointers
+- [x] Naive graph implementation
+- [x] Create custom marshaller which supports cycles and correctly restores pointers
+
+  This hasn't really been done the proper way, but it works.
+
 - [ ] Tests
 - [ ] Migrate what can be migrated from zsh to go
 - [ ] Benchmarking

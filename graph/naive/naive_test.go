@@ -9,6 +9,7 @@ import (
 func TestNaive(t *testing.T) {
 	t.Run("Track", TestNaiveTrack)
 	t.Run("Hint", TestNaiveHint)
+	t.Run("SaveLoad", TestNaiveSaveLoad)
 }
 
 func TestNaiveTrack(t *testing.T) {
@@ -19,10 +20,10 @@ func TestNaiveTrack(t *testing.T) {
 	g.Track(id, wd, cmd1)
 	assert.Len(t, g.Nodes, 1)
 	assert.Contains(t, g.Nodes, wd)
-	assert.Contains(t, g.Nodes[wd], cmd1)
-	assert.Equal(t, g.Nodes[wd][cmd1].Hits, 1)
-	assert.Equal(t, g.Nodes[wd][cmd1].From, g.Nodes[wd])
-	assert.Equal(t, g.Nodes[wd][cmd1].To, node(nil))
+	assert.Contains(t, g.Nodes[wd].edges, cmd1)
+	assert.Equal(t, g.Nodes[wd].edges[cmd1].Hits, 1)
+	assert.Equal(t, g.Nodes[wd].edges[cmd1].From, g.Nodes[wd])
+	assert.Nil(t, g.Nodes[wd].edges[cmd1].To)
 
 	assert.Len(t, g.walkers, 1)
 	assert.Contains(t, g.walkers, id)
@@ -34,16 +35,16 @@ func TestNaiveTrack(t *testing.T) {
 	g.Track(id, wd, cmd2)
 	assert.Len(t, g.Nodes, 1)
 	assert.Contains(t, g.Nodes, wd)
-	assert.Contains(t, g.Nodes[wd], cmd1)
-	assert.Contains(t, g.Nodes[wd], cmd2)
-	assert.Equal(t, g.Nodes[wd][cmd1].Hits, 1)
-	assert.Equal(t, g.Nodes[wd][cmd1].From, g.Nodes[wd])
+	assert.Contains(t, g.Nodes[wd].edges, cmd1)
+	assert.Contains(t, g.Nodes[wd].edges, cmd2)
+	assert.Equal(t, g.Nodes[wd].edges[cmd1].Hits, 1)
+	assert.Equal(t, g.Nodes[wd].edges[cmd1].From, g.Nodes[wd])
 	// Now this has been updated
-	assert.Equal(t, g.Nodes[wd][cmd1].To, g.Nodes[wd])
+	assert.Equal(t, g.Nodes[wd].edges[cmd1].To, g.Nodes[wd])
 
-	assert.Equal(t, g.Nodes[wd][cmd2].Hits, 1)
-	assert.Equal(t, g.Nodes[wd][cmd2].From, g.Nodes[wd])
-	assert.Equal(t, g.Nodes[wd][cmd2].To, node(nil))
+	assert.Equal(t, g.Nodes[wd].edges[cmd2].Hits, 1)
+	assert.Equal(t, g.Nodes[wd].edges[cmd2].From, g.Nodes[wd])
+	assert.Nil(t, g.Nodes[wd].edges[cmd2].To)
 
 	assert.Len(t, g.walkers, 1)
 	assert.Contains(t, g.walkers, id)
@@ -53,9 +54,9 @@ func TestNaiveTrack(t *testing.T) {
 	// Run to only increment Hits on graph
 	g.Track(id, wd, cmd2)
 	assert.Len(t, g.Nodes, 1)
-	assert.Equal(t, g.Nodes[wd][cmd1].Hits, 1)
+	assert.Equal(t, g.Nodes[wd].edges[cmd1].Hits, 1)
 	// Should increase the count
-	assert.Equal(t, g.Nodes[wd][cmd2].Hits, 2)
+	assert.Equal(t, g.Nodes[wd].edges[cmd2].Hits, 2)
 
 	assert.Len(t, g.walkers[id], 3)
 	assert.Equal(t, g.walkers[id][0], g.walkers[id][1])
@@ -85,4 +86,8 @@ func TestNaiveHint(t *testing.T) {
 	g.Track(id, wd1, cmd2)
 	got = g.Hint(id, wd1)
 	assert.Equal(t, cmd2, got, "two commands, cmd2 greater hits")
+}
+
+func TestNaiveSaveLoad(t *testing.T) {
+
 }

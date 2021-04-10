@@ -7,16 +7,19 @@ import (
 )
 
 type edge struct {
-	Hits int  `json:"c"`
-	From node `json:"f"`
-	To   node `json:"t"`
+	Hits int   `json:"c"`
+	From *node `json:"f"`
+	To   *node `json:"t"`
 }
 
 // cmd -> node
-type node map[string]*edge
+type node struct {
+	id    int
+	edges map[string]*edge
+}
 
 type walkerNode struct {
-	lastNode node
+	lastNode *node
 	lastEdge *edge
 }
 
@@ -37,27 +40,30 @@ func (w walker) progress(next *walkerNode) walker {
 type Graph struct {
 	// wd -> node
 	// Must assess how efficient this implementation is.
-	Nodes            map[string]node   `json:"nodes"`
+	Nodes            map[string]*node  `json:"nodes"`
 	MaxWalkerHistory int               `json:"max_walker_history"`
 	walkers          map[string]walker // not saved to file
 }
 
 func NewGraph(maxWalkerHistory int) *Graph {
 	return &Graph{
-		Nodes:            map[string]node{},
+		Nodes:            map[string]*node{},
 		MaxWalkerHistory: maxWalkerHistory,
 		walkers:          map[string]walker{},
 	}
 }
 
-func (g *Graph) newNode(wd, cmd string, parent node) (node, *edge) {
-	n := node{}
+func (g *Graph) newNode(wd, cmd string, parent *node) (*node, *edge) {
+	n := &node{
+		id:    len(g.Nodes), // this will eventually break
+		edges: map[string]*edge{},
+	}
 	e := &edge{
 		Hits: 1,
 		From: n,
 		To:   parent,
 	}
-	n[cmd] = e
+	n.edges[cmd] = e
 	g.Nodes[wd] = n
 	return n, e
 }
@@ -80,7 +86,7 @@ func (g *Graph) Track(id, wd, cmd string) {
 	}
 	n := g.Nodes[wd]
 	// Now check if there is a known edge with the run command
-	if _, ok := n[cmd]; !ok {
+	if _, ok := n.edges[cmd]; !ok {
 		// TODO: should really check permutations of the command (maybe even
 		// just the binary name)
 		e := &edge{
@@ -88,14 +94,14 @@ func (g *Graph) Track(id, wd, cmd string) {
 			From: n,
 			To:   nil,
 		}
-		n[cmd] = e
+		n.edges[cmd] = e
 		g.walkers[id] = walker.progress(&walkerNode{
 			lastNode: n,
 			lastEdge: e,
 		})
 		return
 	}
-	n[cmd].Hits++
+	n.edges[cmd].Hits++
 	// Reference to itself
 	g.walkers[id] = walker.progress(walker[0])
 }
@@ -117,7 +123,7 @@ func (g *Graph) Hint(id, wd string) string {
 	// }
 	var max = -1
 	var best string
-	for cmd, e := range n {
+	for cmd, e := range n.edges {
 		if e.Hits > max {
 			max = e.Hits
 			best = cmd
@@ -133,6 +139,51 @@ func (g *Graph) End(id string) {
 	delete(g.walkers, id)
 }
 
+// These structs are what we need to move from a programmer-friendly structure
+// to a serialisable one. Unfortunately pointers, cyclic references and
+// serialisation do not play well together.
+type serialisableGraph struct {
+	Wds   []string                      `json:"wds"`
+	Edges []map[string]serialisableEdge `json:"edges"`
+}
+type serialisableEdge struct {
+	Hits int `json:"h"`
+	To   int `json:"t"`
+}
+
+func (g *Graph) Save(filePath string) error {
+	// We first need to build a model which doesn't contain pointers nor cycles.
+	nodes := make([]*node, len(g.Nodes))
+	sg := serialisableGraph{
+		Wds:   make([]string, len(g.Nodes)),
+		Edges: make([]map[string]serialisableEdge, len(g.Nodes)),
+	}
+	// First pass, get all node indices
+	for wd, n := range g.Nodes {
+		nodes[n.id] = n
+		sg.Wds[n.id] = wd
+	}
+	// Second pass, do the same with edges
+	for fromIndex, n := range nodes {
+		sg.Edges[fromIndex] = map[string]serialisableEdge{}
+		for cmd, e := range n.edges {
+			se := serialisableEdge{
+				Hits: e.Hits,
+				To:   -1,
+			}
+			if e.To != nil {
+				se.To = e.To.id
+			}
+			sg.Edges[fromIndex][cmd] = se
+		}
+	}
+	b, err := json.Marshal(sg)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filePath, b, os.ModePerm)
+}
+
 func (g *Graph) Load(filePath string) error {
 	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -142,13 +193,35 @@ func (g *Graph) Load(filePath string) error {
 		}
 		return err
 	}
-	return json.Unmarshal(b, g)
-}
-
-func (g *Graph) Save(filePath string) error {
-	b, err := json.Marshal(g)
+	sg := serialisableGraph{}
+	err = json.Unmarshal(b, &sg)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filePath, b, os.ModePerm)
+	// Here we must do the opposite, where we start from the serialisable model
+	// and build the programmer-friendly one.
+	g.Nodes = map[string]*node{}
+	// First pass, lay down all node pointers
+	for id, wd := range sg.Wds {
+		g.Nodes[wd] = &node{
+			id:    id,
+			edges: map[string]*edge{},
+		}
+	}
+	// Second pass, do the same with edges
+	for nodeID, edges := range sg.Edges {
+		n := g.Nodes[sg.Wds[nodeID]]
+		for cmd, se := range edges {
+			e := &edge{
+				Hits: se.Hits,
+				From: n,
+				To:   nil,
+			}
+			if se.To != -1 {
+				e.To = g.Nodes[sg.Wds[se.To]]
+			}
+			n.edges[cmd] = e
+		}
+	}
+	return nil
 }
