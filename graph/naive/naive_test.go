@@ -19,7 +19,7 @@ func TestNaive(t *testing.T) {
 }
 
 func TestNaiveTrack(t *testing.T) {
-	g := NewGraph(10)
+	g := NewGraph(10, 3)
 	id := "1"
 	wd := "d1"
 	cmd1 := "c1"
@@ -69,7 +69,12 @@ func TestNaiveTrack(t *testing.T) {
 }
 
 func TestNaiveHint(t *testing.T) {
-	g := NewGraph(10)
+	t.Run("Base", TestNaiveHintBasic)
+	t.Run("Breakdown", TestNaiveHintBasic)
+}
+
+func TestNaiveHintBasic(t *testing.T) {
+	g := NewGraph(10, 3)
 	id := "1"
 	wd1 := "d1"
 	got := g.Hint(id, wd1)
@@ -79,6 +84,10 @@ func TestNaiveHint(t *testing.T) {
 	g.Track(id, wd1, cmd1)
 	got = g.Hint(id, wd1)
 	assert.Equal(t, cmd1, got, "single matching node")
+
+	id2 := "2"
+	got = g.Hint(id2, wd1)
+	assert.Equal(t, cmd1, got, "single matching node, for another provider")
 
 	wd2 := "d2"
 	got = g.Hint(id, wd2)
@@ -92,6 +101,20 @@ func TestNaiveHint(t *testing.T) {
 	g.Track(id, wd1, cmd2)
 	got = g.Hint(id, wd1)
 	assert.Equal(t, cmd2, got, "two commands, cmd2 greater hits")
+}
+
+func TestNaiveHintBreakdown(t *testing.T) {
+	g := NewGraph(10, 3)
+	id := "1"
+	wd1 := "/foo/bar/baz"
+	cmd1 := "binary arg1 arg2 --flag1 flag1value -t"
+	g.Track(id, wd1, cmd1)
+	got := g.Hint(id, wd1)
+	assert.Equal(t, cmd1, got, "same dir match")
+
+	wd2 := "/another/foo/bar/baz"
+	got = g.Hint(id, wd2)
+	assert.Equal(t, cmd1, got, "different dir match")
 }
 
 func TestNaiveSave(t *testing.T) {
@@ -111,7 +134,7 @@ func TestNaiveSave(t *testing.T) {
 	}
 	for name, setup := range runs {
 		t.Run(name, func(t *testing.T) {
-			g := NewGraph(10)
+			g := NewGraph(10, 3)
 			setup(g)
 			base := path.Join("testdata", name)
 			actualFile := base + "_actual.json"
@@ -152,13 +175,13 @@ func TestNaiveLoad(t *testing.T) {
 	}
 	for name, setup := range runs {
 		t.Run(name, func(t *testing.T) {
-			expected := NewGraph(10)
+			expected := NewGraph(10, 3)
 			setup(expected)
 			// Reset the walker property as it is not saved
 			for id := range expected.walkers {
 				delete(expected.walkers, id)
 			}
-			actual := NewGraph(10)
+			actual := NewGraph(10, 3)
 			err := actual.Load(path.Join("testdata", name+".json"))
 			assert.NoError(t, err)
 			assert.EqualValues(t, expected, actual)

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path"
+	"strings"
 )
 
 type edge struct {
@@ -37,18 +39,31 @@ func (w walker) progress(next *walkerNode) walker {
 	return append([]*walkerNode{next}, w[:max]...)
 }
 
+// The zero value of this structure cannot be used. Please use NewGraph to
+// obtain a valid one.
 type Graph struct {
 	// wd -> node
 	// Must assess how efficient this implementation is.
-	Nodes            map[string]*node  `json:"nodes"`
-	MaxWalkerHistory int               `json:"max_walker_history"`
-	walkers          map[string]walker // not saved to file
+	Nodes map[string]*node `json:"nodes"`
+	// How many recent commands must each walker keep track of.
+	MaxWalkerHistory int `json:"max_walker_history"`
+	// How many path components (directories) are at least needed to be a match
+	// of a different path.
+	// This value should be a positive integer.
+	MinCommonPath int               `json:"min_common_path"`
+	walkers       map[string]walker // not saved to file
 }
 
-func NewGraph(maxWalkerHistory int) *Graph {
+// Create a new graph with the given parameters.
+// If minCommonPath is set to a value <=0, it will default to 1.
+func NewGraph(maxWalkerHistory int, minCommonPath int) *Graph {
+	if minCommonPath <= 0 {
+		minCommonPath = 1
+	}
 	return &Graph{
 		Nodes:            map[string]*node{},
 		MaxWalkerHistory: maxWalkerHistory,
+		MinCommonPath:    minCommonPath,
 		walkers:          map[string]walker{},
 	}
 }
@@ -103,15 +118,27 @@ func (g *Graph) Track(id, wd, cmd string) {
 	}
 	n.edges[cmd].Hits++
 	// Reference to itself
-	g.walkers[id] = walker.progress(walker[0])
+	if len(walker) == 0 {
+		g.walkers[id] = walker.progress(&walkerNode{
+			lastNode: n,
+			lastEdge: n.edges[cmd],
+		})
+	} else {
+		g.walkers[id] = walker.progress(walker[0])
+	}
 }
 
 const shrug = "¯\\_(ツ)_/¯"
 
 func (g *Graph) Hint(id, wd string) string {
 	if _, ok := g.Nodes[wd]; !ok {
-		// TODO: for now don't do anything, but we should try fuzzy matching by
-		// scanning the wd components
+		// Try to see if we have a node with a similar structure
+		pathComponents := strings.Split(wd, "/")
+		if len(pathComponents) > g.MinCommonPath {
+			// Reduce the path to the common path and check again
+			return g.Hint(id, "/"+path.Join(pathComponents[len(pathComponents)-g.MinCommonPath:]...))
+
+		}
 		// Maybe even check the walker's history
 		return shrug
 	}

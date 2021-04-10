@@ -21,8 +21,10 @@ Upon pressing TAB with an empty prompty buffer, it will try to hint at a good co
 
   This hasn't really been done the proper way, but it works.
 
-- [ ] Tests
+- [x] Tests
 - [ ] Migrate what can be migrated from zsh to go
 - [ ] Benchmarking
 - [ ] R/B tree implementation???
-- [ ] Partial path search
+- [x] Partial path search
+- [ ] Better error catching
+- [ ] More dynamic graph parameters (env variables or flags)
