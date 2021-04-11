@@ -80,6 +80,9 @@ func TestNaiveHintBasic(t *testing.T) {
 	got := g.Hint(id, wd1)
 	assert.Equal(t, shrug, got, "no matching node, no tracking info")
 
+	got = g.Hint(id, "d1/d2/d3/d4") // shold be longer than minCommonPath
+	assert.Equal(t, shrug, got, "no matching node, no tracking info, long path")
+
 	cmd1 := "c1"
 	g.Track(id, wd1, cmd1)
 	got = g.Hint(id, wd1)
@@ -96,7 +99,7 @@ func TestNaiveHintBasic(t *testing.T) {
 	cmd2 := "c2"
 	g.Track(id, wd1, cmd2)
 	got = g.Hint(id, wd1)
-	assert.Equal(t, cmd1, got, "two commands, same hits")
+	assert.Contains(t, []string{cmd1, cmd2}, got, "two commands, same hits, random result")
 
 	g.Track(id, wd1, cmd2)
 	got = g.Hint(id, wd1)

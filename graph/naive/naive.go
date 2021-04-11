@@ -133,6 +133,9 @@ const shrug = "¯\\_(ツ)_/¯"
 func (g *Graph) Hint(id, wd string) string {
 	if _, ok := g.Nodes[wd]; !ok {
 		// Try to see if we have a node with a similar structure
+		if strings.HasPrefix(wd, "/") {
+			wd = wd[1:]
+		}
 		pathComponents := strings.Split(wd, "/")
 		if len(pathComponents) > g.MinCommonPath {
 			// Reduce the path to the common path and check again

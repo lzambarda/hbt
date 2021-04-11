@@ -16,5 +16,5 @@ func NewErrUnrecognisedCommand(cmd string) error {
 }
 
 func NewErrWrongUsage(correct string) error {
-	return fmt.Errorf("%w: correct %s", correct)
+	return fmt.Errorf("%w: correct %s", ErrWrongUsage, correct)
 }

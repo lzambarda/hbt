@@ -73,10 +73,11 @@ func handleConnection(c net.Conn, g graph.Graph) {
 		}
 		g.Track(args[1], args[2], args[3])
 	case "hint":
-		if len(args) != 3 {
-			fmt.Printf("wrong number of arguments, expected 3, got %d\n", len(args))
+		if len(args) != 4 {
+			fmt.Printf("wrong number of arguments, expected 4, got %d\n", len(args))
 			return
 		}
+		// args[3] is unused for now
 		c.Write([]byte(g.Hint(args[1], args[2])))
 	case "end":
 		if len(args) != 2 {
