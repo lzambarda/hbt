@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -18,6 +19,49 @@ type edge struct {
 type node struct {
 	id    int
 	edges map[string]*edge
+}
+
+type cmdEdge struct {
+	cmd   string
+	score int
+}
+type sortedEdges []cmdEdge
+
+func (s sortedEdges) Len() int {
+	return len(s)
+}
+
+func (s sortedEdges) Less(i, j int) bool {
+	return s[i].score > s[j].score
+}
+
+func (s sortedEdges) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (n *node) getSortedCommands() []string {
+	var sorted = make(sortedEdges, 0, len(n.edges))
+	for cmd, e := range n.edges {
+		sorted = append(sorted, cmdEdge{cmd, e.Hits})
+	}
+	result := make([]string, len(sorted))
+	sort.Sort(sorted)
+	for i, s := range sorted {
+		result[i] = s.cmd
+	}
+	return result
+}
+
+func (n *node) getBestCommand() string {
+	var max = -1
+	var best string
+	for cmd, e := range n.edges {
+		if e.Hits > max {
+			max = e.Hits
+			best = cmd
+		}
+	}
+	return best
 }
 
 type walkerNode struct {
@@ -52,6 +96,9 @@ type Graph struct {
 	// This value should be a positive integer.
 	MinCommonPath int               `json:"min_common_path"`
 	walkers       map[string]walker // not saved to file
+	// For each session, keep an internal counter to cycle through the possible
+	// suggestions.
+	suggestionState map[string]int
 }
 
 // Create a new graph with the given parameters.
@@ -65,6 +112,7 @@ func NewGraph(maxWalkerHistory int, minCommonPath int) *Graph {
 		MaxWalkerHistory: maxWalkerHistory,
 		MinCommonPath:    minCommonPath,
 		walkers:          map[string]walker{},
+		suggestionState:  map[string]int{},
 	}
 }
 
@@ -89,6 +137,8 @@ func (g *Graph) Track(id, wd, cmd string) {
 	if walker == nil {
 		walker = make([]*walkerNode, 0, g.MaxWalkerHistory)
 	}
+	// Reset the suggestion state
+	g.suggestionState[id] = 0
 	// Check if there is a node matching the current wdectory
 	if _, ok := g.Nodes[wd]; !ok {
 		// TODO: for now don't do anything, but we should try a cmd hook
@@ -142,6 +192,8 @@ func (g *Graph) Hint(id, wd string) string {
 			return g.Hint(id, "/"+path.Join(pathComponents[len(pathComponents)-g.MinCommonPath:]...))
 
 		}
+		// Reset suggestion for session
+		g.suggestionState[id] = 0
 		// Maybe even check the walker's history
 		return shrug
 	}
@@ -151,17 +203,14 @@ func (g *Graph) Hint(id, wd string) string {
 	// if walker == nil {
 	// 	return shrug
 	// }
-	var max = -1
-	var best string
-	for cmd, e := range n.edges {
-		if e.Hits > max {
-			max = e.Hits
-			best = cmd
-		}
-	}
+	// Use the suggestion state to cycle through the commands
+	best := n.getSortedCommands()[g.suggestionState[id]%len(n.edges)]
 	if best == "" {
+		// Reset suggestion for session
+		g.suggestionState[id] = 0
 		return shrug
 	}
+	g.suggestionState[id]++
 	return best
 }
 

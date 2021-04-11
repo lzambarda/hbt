@@ -12,10 +12,25 @@ import (
 )
 
 func TestNaive(t *testing.T) {
+	t.Run("Node", TestNaiveNode)
 	t.Run("Track", TestNaiveTrack)
 	t.Run("Hint", TestNaiveHint)
 	t.Run("Save", TestNaiveSave)
 	t.Run("Load", TestNaiveLoad)
+}
+
+func TestNaiveNode(t *testing.T) {
+	cmd1 := "c1"
+	cmd2 := "c2"
+	cmd3 := "c3"
+	n := node{
+		edges: map[string]*edge{},
+	}
+	n.edges[cmd1] = &edge{Hits: 2}
+	n.edges[cmd2] = &edge{Hits: 3}
+	n.edges[cmd3] = &edge{Hits: 1}
+	assert.Equal(t, cmd2, n.getBestCommand())
+	assert.EqualValues(t, []string{cmd2, cmd1, cmd3}, n.getSortedCommands())
 }
 
 func TestNaiveTrack(t *testing.T) {
@@ -104,6 +119,10 @@ func TestNaiveHintBasic(t *testing.T) {
 	g.Track(id, wd1, cmd2)
 	got = g.Hint(id, wd1)
 	assert.Equal(t, cmd2, got, "two commands, cmd2 greater hits")
+	got = g.Hint(id, wd1)
+	assert.Equal(t, cmd1, got, "two commands, cmd2 greater hits, cycle hints 1")
+	got = g.Hint(id, wd1)
+	assert.Equal(t, cmd2, got, "two commands, cmd2 greater hits, cycle hints 2")
 }
 
 func TestNaiveHintBreakdown(t *testing.T) {

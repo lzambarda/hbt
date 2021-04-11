@@ -2,6 +2,14 @@
 
 A heuristic command suggestion system for zsh.
 
+## Rationale
+
+Storing each command into a directed graph where each node is a directory, and the edges are commands connecting nodes.
+
+Each new shell session creates a "walker" which keeps track of the "path" of directories and commands.
+
+The built graph can then be used to suggest possible commands to execute.
+
 ## Installation
 
 1. Download or build `hbt`
@@ -47,3 +55,4 @@ Given that the functions use zsh hooks which are executed at every command, I di
 - [ ] Better error catching
 - [ ] More dynamic graph parameters (env variables or flags)
 - [ ] Do not store sensistive information (is it even possible to detect it?)
+- [ ] Identify "workflows" by using the walker model (for the naive implementation)
