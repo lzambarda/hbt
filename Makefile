@@ -17,6 +17,12 @@ build:
 	@GOOS=darwin GOARCH=amd64 go build -ldflags $(BUILDFLAGS) -o ./bin/darwin/$(NAME) ./main.go
 	@GOOS=linux GOARCH=amd64 go build -ldflags $(BUILDFLAGS) -o bin/linux/$(NAME) ./main.go
 
+
+.PHONY: build_assets
+build_assets: build
+	@tar -zcvf assets/darwin-amd64-$(NAME).tgz ./bin/darwin/$(NAME)
+	@tar -zcvf assets/linux-amd64-$(NAME).tgz ./bin/linux/$(NAME)
+
 run="."
 dir="./..."
 short="-short"
