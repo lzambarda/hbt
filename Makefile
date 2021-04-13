@@ -14,7 +14,8 @@ dependencies: ## Install dependencies requried for development operations.
 
 .PHONY: build
 build:
-	@go build -ldflags $(BUILDFLAGS) -o ./bin/$(NAME) ./main.go
+	@GOOS=darwin GOARCH=amd64 go build -ldflags $(BUILDFLAGS) -o ./bin/darwin/$(NAME) ./main.go
+	@GOOS=linux GOARCH=amd64 go build -ldflags $(BUILDFLAGS) -o bin/linux/$(NAME) ./main.go
 
 run="."
 dir="./..."

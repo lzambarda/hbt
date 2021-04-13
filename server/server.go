@@ -8,16 +8,21 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/lzambarda/hbt/graph"
 	"github.com/lzambarda/hbt/internal"
 )
 
-func Start(g graph.Graph, cachePath string) error {
+func saveRoutines(g graph.Graph, cachePath string) {
+	// Intercept termination signal to save the most recent knowledge
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
+		if internal.Debug {
+			fmt.Println("Saving graph at", cachePath)
+		}
 		err := g.Save(cachePath)
 		if err != nil {
 			fmt.Println(err)
@@ -25,6 +30,24 @@ func Start(g graph.Graph, cachePath string) error {
 		}
 		os.Exit(0)
 	}()
+	// Periodically save the file
+	go func() {
+		for {
+			time.Sleep(internal.SaveInterval)
+			if internal.Debug {
+				fmt.Println("Saving graph at", cachePath)
+			}
+			err := g.Save(cachePath)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+	}()
+}
+
+func Start(g graph.Graph, cachePath string) error {
+	saveRoutines(g, cachePath)
 	if internal.Debug {
 		fmt.Println("Starting server at", internal.Port)
 	}

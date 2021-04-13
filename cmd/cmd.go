@@ -39,6 +39,14 @@ var (
 				Destination: &internal.Port,
 				EnvVars:     []string{internal.PortName},
 			},
+			&cli.DurationFlag{
+				Name:        "save-interval",
+				Aliases:     []string{"s"},
+				DefaultText: internal.DefaultSaveInterval.String(),
+				Value:       internal.DefaultSaveInterval,
+				Destination: &internal.SaveInterval,
+				EnvVars:     []string{internal.SaveIntervalName},
+			},
 		},
 		Action: func(_ *cli.Context) error {
 			cachePath := path.Join(internal.CachePath, internal.CacheName)
