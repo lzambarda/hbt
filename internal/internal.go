@@ -4,7 +4,7 @@ import "time"
 
 const (
 	DebugName        = "HBT_DEBUG"
-	CachePathName    = "HBT_CACHE"
+	CachePathName    = "HBT_CACHE_PATH"
 	PortName         = "HBT_PORT"
 	SaveIntervalName = "HBT_SAVE_INTERVAL"
 )

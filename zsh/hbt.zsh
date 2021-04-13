@@ -1,9 +1,10 @@
 # To be able to use zsh hooks
 autoload -Uz add-zsh-hook
 
-export PATH="$HOME/Repositories/hbt/bin:$PATH"
-HBT_CACHE_PATH=~/dotfiles/hbt/
-HBT_PORT=43111
+export PATH="$HOME/Repositories/hbt/bin/darwin:$PATH"
+export HBT_CACHE_PATH="$HOME/dotfiles/hbt/"
+export HBT_PORT=43111
+export HBT_SAVE_INTERVAL="10m"
 
 function hbt_start() {
 	pid=$(pgrep hbtsrv)
