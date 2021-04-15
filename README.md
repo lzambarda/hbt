@@ -31,6 +31,12 @@ The zsh bit of hbt talks to a locally spawned TCP server handled by a go binary.
 Hbt will track every command that you type and store it into a graph.
 Upon pressing TAB with an empty prompty buffer, it will try to hint at a good command, according to your typing history. Shrugs otherwise (seriously).
 
+It internally uses some functions from [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions).
+
+Since a ~~picture~~ GIF is worth a thousand words:
+
+![demo](./docs/demo.gif)
+
 ### Manual interaction with hbt
 
 [`zsh/hbt.zsh`](./zsh/hbt.zsh) provides some functions you can use to interact with a running hbt server.
