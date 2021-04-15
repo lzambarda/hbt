@@ -42,6 +42,7 @@ function _hbt_search () {
 	if [[ -z ${LBUFFER// } ]]; then
 		suggestion=$(echo -n "hint\n$$\n$(pwd)\n$1" | nc localhost $HBT_PORT)
 		POSTDISPLAY="${suggestion#$BUFFER}"
+		_zsh_autosuggest_highlight_reset
 		_zsh_autosuggest_highlight_apply
 	else
 		 zle expand-or-complete-prefix;
