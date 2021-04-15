@@ -5,6 +5,16 @@
 
 
 
+<a name="v0.0.5-alpha"></a>
+## [v0.0.5-alpha] - 2021-04-15
+
+### Added
+- Add gif demo to readme
+
+### Fixed
+- Fix highlight not resetting properly
+
+
 <a name="v0.0.4-alpha"></a>
 ## [v0.0.4-alpha] - 2021-04-13
 
@@ -12,6 +22,9 @@
 - Add build assets makefile target
 - Add cross-platform build targets
 - Add periodic saving routine
+
+### Code Refactoring
+- Update changelog
 
 ### Fixed
 - Fix broken env variables
