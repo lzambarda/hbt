@@ -8,8 +8,15 @@ BUILDFLAGS:="-s -w -X github.com/lzambarda/hbt/internal.Version=$(BUILD_TAG)"
 
 .PHONY: dependencies
 dependencies: ## Install dependencies requried for development operations.
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
 	@go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
 	@go mod tidy
+
+
+.PHONY: lint
+lint:
+	go fmt ./...
+	golangci-lint run ./...
 
 
 .PHONY: build
