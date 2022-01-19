@@ -9,7 +9,6 @@ BUILDFLAGS:="-s -w -X github.com/lzambarda/hbt/internal.Version=$(BUILD_TAG)"
 .PHONY: dependencies
 dependencies: ## Install dependencies requried for development operations.
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
-	@go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
 	@go mod tidy
 
 
@@ -36,14 +35,3 @@ short="-short"
 .PHONY: test
 test:
 	@go test --timeout=40s $(short) $(dir) -run $(run);
-
-.PHONY: changelog
-changelog: ## Update the changelog.
-	@git-chglog > CHANGELOG.md
-	@echo "Changelog has been updated."
-
-
-.PHONY: changelog_release
-changelog_release: ## Update the changelog with a release tag.
-	@git-chglog --next-tag $(tag) > CHANGELOG.md
-	@echo "Changelog has been updated."
