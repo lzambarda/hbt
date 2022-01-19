@@ -1,6 +1,8 @@
+// Package server contains all logic related to the server.
 package server
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -10,13 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lzambarda/hbt/graph"
 	"github.com/lzambarda/hbt/internal"
 )
 
-func saveRoutines(g graph.Graph, cachePath string) {
+func saveRoutines(g Graph, cachePath string) {
 	// Intercept termination signal to save the most recent knowledge
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
@@ -46,7 +47,8 @@ func saveRoutines(g graph.Graph, cachePath string) {
 	}()
 }
 
-func Start(g graph.Graph, cachePath string) error {
+// Start the hbt server with the given graph and cache path.
+func Start(g Graph, cachePath string) error {
 	saveRoutines(g, cachePath)
 	if internal.Debug {
 		fmt.Println("Starting server at", internal.Port)
@@ -55,7 +57,7 @@ func Start(g graph.Graph, cachePath string) error {
 	if err != nil {
 		return err
 	}
-	defer l.Close()
+	defer l.Close() //nolint:errcheck // It is okay.
 	for {
 		c, err := l.Accept()
 		if err != nil {
@@ -65,18 +67,19 @@ func Start(g graph.Graph, cachePath string) error {
 	}
 }
 
+// Stop the server.
 func Stop() error {
 	return nil
 }
 
-func handleConnection(c net.Conn, g graph.Graph) {
-	defer c.Close()
+func handleConnection(c net.Conn, g Graph) {
+	defer c.Close()              //nolint:errcheck // It is okay.
 	buf := make([]byte, 0, 4096) // arbitrary
 	tmp := make([]byte, 64)      // arbitrary
 	for {
 		n, err := c.Read(tmp)
 		if err != nil {
-			if err != io.EOF {
+			if !errors.Is(err, io.EOF) {
 				fmt.Println(err)
 				return
 			}
@@ -101,7 +104,7 @@ func handleConnection(c net.Conn, g graph.Graph) {
 			return
 		}
 		// args[3] is unused for now
-		c.Write([]byte(g.Hint(args[1], args[2])))
+		c.Write([]byte(g.Hint(args[1], args[2]))) //nolint:errcheck,gosec // It is okay.
 	case "end":
 		if len(args) != 2 {
 			fmt.Printf("wrong number of arguments, expected 2, got %d\n", len(args))

@@ -1,3 +1,4 @@
+//nolint:stylecheck,revive // Not needed.
 package cmd
 
 import (

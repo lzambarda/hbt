@@ -1,8 +1,8 @@
+//nolint:goconst // Prefer readability.
 package naive
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -86,7 +86,7 @@ func testNaiveTrack(t *testing.T) {
 
 func testNaiveHint(t *testing.T) {
 	t.Run("Base", testNaiveHintBasic)
-	t.Run("Breakdown", testNaiveHintBasic)
+	t.Run("Breakdown", testNaiveHintBreakdown)
 }
 
 func testNaiveHintBasic(t *testing.T) {
@@ -163,12 +163,12 @@ func testNaiveSave(t *testing.T) {
 			actualFile := base + "_actual.json"
 			err := g.Save(actualFile)
 			assert.NoError(t, err)
-			be, err := ioutil.ReadFile(base + ".json")
+			be, err := os.ReadFile(base + ".json")
 			require.NoError(t, err)
 			var expected map[string]interface{}
 			err = json.Unmarshal(be, &expected)
 			require.NoError(t, err)
-			ba, err := ioutil.ReadFile(actualFile)
+			ba, err := os.ReadFile(actualFile)
 			require.NoError(t, err)
 			var actual map[string]interface{}
 			err = json.Unmarshal(ba, &actual)

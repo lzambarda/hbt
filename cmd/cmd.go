@@ -1,3 +1,4 @@
+// Package cmd contains the entrypoint of hbt.
 package cmd
 
 import (
@@ -60,6 +61,7 @@ var (
 	}
 )
 
+// Run the root command with the given arguments.
 func Run(arguments []string) error {
 	return root.Run(arguments)
 }

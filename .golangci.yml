@@ -17,7 +17,7 @@ linters-settings:
     min-len: 2
     min-occurrences: 2
   misspell:
-    locale: US
+    locale: UK
   lll:
     line-length: 140
   goimports:
@@ -42,64 +42,75 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gosec # security check is not impoerant in tests
+        - gosec # security check is not important in tests
         - dupl # we usualy duplicate code in tests
         - bodyclose
         - unparam
+        - errcheck
+        - govet
   fix: true
-  new-from-rev: f7ba36ac19758ed7c294e6e61630ce77a61f234f
+  exclude-use-default: false
 
 run:
+  build-tags:
+    - integration
+    - e2e
   skip-dirs:
     - model
     - tmp
     - bin
     - scripts
-
+    - test
   tests: true
-  build-tags:
-    - integration
 
 linters:
   disable-all: true
   fast: true
   enable:
-    - asciicheck
     - bodyclose
     - deadcode
-    - dogsled
     - depguard
+    - dogsled
     - dupl
+    - durationcheck
+    - errcheck
     - errorlint
     - exportloopref
+    - forcetypeassert
     - gocognit
     - goconst
     - gocritic
     - gocyclo
     - godot
     - godox
+    - revive
     - goprintffuncname
     - gosec
     - gosimple
     - govet
-    # - misspell # disabled as it was breaking interfaces with FinaliZe
+    - ineffassign
+    - misspell
     - nakedret
     - nestif
+    - nilerr
     - prealloc
-    - revive
     - rowserrcheck
+    - sqlclosecheck
     - staticcheck
+    - structcheck
     - stylecheck
-    - unconvert
-    # - unparam # Too many false positives on Task interface implementation.
-    - unused
-    - whitespace
-    # - wrapcheck
     - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace
 
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration
 service:
-  golangci-lint-version: 1.38.x
+  golangci-lint-version: 1.43.x
   prepare:
     - echo "here I can run custom commands, but no preparation needed for this repo"

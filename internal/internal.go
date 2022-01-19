@@ -1,3 +1,4 @@
+//nolint:revive,stylecheck // Self-explanatory
 package internal
 
 import "time"
@@ -22,7 +23,7 @@ var (
 	CachePath    string
 	Port         string
 	SaveInterval time.Duration
-	// Must be var, otherwise -X flag can't modify it
+	// Must be var, otherwise -X flag can't modify it.
 	Version = "unknown"
 )
 

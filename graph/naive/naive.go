@@ -1,21 +1,25 @@
+//nolint:godox // Okay for now.
+// Package naive contains a simplistic implementation of a suggestion graph.
+// Nothing too fancy.
 package naive
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path"
 	"sort"
 	"strings"
 )
 
+//nolint:govet // Prefer this order of memory efficiency.
 type edge struct {
 	Hits int   `json:"c"`
 	From *node `json:"f"`
 	To   *node `json:"t"`
 }
 
-// cmd -> node
+//nolint:govet // Prefer this order of memory efficiency.
+// cmd -> node.
 type node struct {
 	id    int
 	edges map[string]*edge
@@ -83,8 +87,10 @@ func (w walker) progress(next *walkerNode) walker {
 	return append([]*walkerNode{next}, w[:max]...)
 }
 
+// Graph is a naive implementation of a heuristic system.
 // The zero value of this structure cannot be used. Please use NewGraph to
 // obtain a valid one.
+//nolint:govet // Prefer this order of memory efficiency.
 type Graph struct {
 	// wd -> node
 	// Must assess how efficient this implementation is.
@@ -101,9 +107,9 @@ type Graph struct {
 	suggestionState map[string]int
 }
 
-// Create a new graph with the given parameters.
+// NewGraph returns usable Graph instances.
 // If minCommonPath is set to a value <=0, it will default to 1.
-func NewGraph(maxWalkerHistory int, minCommonPath int) *Graph {
+func NewGraph(maxWalkerHistory, minCommonPath int) *Graph {
 	if minCommonPath <= 0 {
 		minCommonPath = 1
 	}
@@ -131,6 +137,8 @@ func (g *Graph) newNode(wd, cmd string, parent *node) (*node, *edge) {
 	return n, e
 }
 
+// Track adds to the graph the command cmd performed at path wd by the id
+// user/process.
 func (g *Graph) Track(id, wd, cmd string) {
 	// Check if this is a new session we are creating
 	walker := g.walkers[id]
@@ -185,19 +193,17 @@ func (g *Graph) findNode(wd string) *node {
 		return n
 	}
 	// Try to see if we have a node with a similar structure
-	if strings.HasPrefix(wd, "/") {
-		wd = wd[1:]
-	}
+	wd = strings.TrimPrefix(wd, "/")
 	pathComponents := strings.Split(wd, "/")
 	if len(pathComponents) > g.MinCommonPath {
 		// Reduce the path to the common path and check again
 		return g.findNode("/" + path.Join(pathComponents[len(pathComponents)-g.MinCommonPath:]...))
-
 	}
 	// Maybe even check the walker's history
 	return nil
 }
 
+// Hint returns the next suggestion for user/process id at path wd.
 func (g *Graph) Hint(id, wd string) string {
 	n := g.findNode(wd)
 	if n == nil {
@@ -226,6 +232,24 @@ func (g *Graph) Hint(id, wd string) string {
 	return best
 }
 
+// Delete removes a previously tracked command. It should not return an
+// error.
+func (g *Graph) Delete(id, wd, cmd string) {
+	n := g.findNode(wd)
+	if n == nil {
+		return
+	}
+	if _, ok := n.edges[cmd]; !ok {
+		return
+	}
+	delete(n.edges, cmd)
+	// Deleting an edge invalidates the suggestion offset, better to reset it
+	// here.
+	g.suggestionState[id] = 0
+}
+
+// End clears a session for user/process id. This is useful to reset a
+// stateful graph.
 func (g *Graph) End(id string) {
 	delete(g.walkers, id)
 }
@@ -242,6 +266,7 @@ type serialisableEdge struct {
 	To   int `json:"t"`
 }
 
+// Save serialises the graph to the given file path.
 func (g *Graph) Save(filePath string) error {
 	// We first need to build a model which doesn't contain pointers nor cycles.
 	nodes := make([]*node, len(g.Nodes))
@@ -272,11 +297,12 @@ func (g *Graph) Save(filePath string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filePath, b, os.ModePerm)
+	return os.WriteFile(filePath, b, os.ModePerm)
 }
 
+// Load initialises the graph with a serialiastion at the give file path.
 func (g *Graph) Load(filePath string) error {
-	b, err := ioutil.ReadFile(filePath)
+	b, err := os.ReadFile(filePath) //nolint:gosec // It is okay.
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Nothing to load
@@ -315,18 +341,4 @@ func (g *Graph) Load(filePath string) error {
 		}
 	}
 	return nil
-}
-
-func (g *Graph) Delete(id, wd, cmd string) {
-	n := g.findNode(wd)
-	if n == nil {
-		return
-	}
-	if _, ok := n.edges[cmd]; !ok {
-		return
-	}
-	delete(n.edges, cmd)
-	// Deleting an edge invalidates the suggestion offset, better to reset it
-	// here.
-	g.suggestionState[id] = 0
 }
