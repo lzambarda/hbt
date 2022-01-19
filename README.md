@@ -1,6 +1,7 @@
 # hbt
 
 A heuristic command suggestion system for zsh.
+TAB anywhere and you can cycle through the commands you previously ran in the same location.
 
 ## Rationale
 
