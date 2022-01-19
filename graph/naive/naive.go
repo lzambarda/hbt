@@ -180,30 +180,42 @@ func (g *Graph) Track(id, wd, cmd string) {
 
 const shrug = "¯\\_(ツ)_/¯"
 
-func (g *Graph) Hint(id, wd string) string {
-	if _, ok := g.Nodes[wd]; !ok {
-		// Try to see if we have a node with a similar structure
-		if strings.HasPrefix(wd, "/") {
-			wd = wd[1:]
-		}
-		pathComponents := strings.Split(wd, "/")
-		if len(pathComponents) > g.MinCommonPath {
-			// Reduce the path to the common path and check again
-			return g.Hint(id, "/"+path.Join(pathComponents[len(pathComponents)-g.MinCommonPath:]...))
+func (g *Graph) findNode(wd string) *node {
+	if n, ok := g.Nodes[wd]; ok {
+		return n
+	}
+	// Try to see if we have a node with a similar structure
+	if strings.HasPrefix(wd, "/") {
+		wd = wd[1:]
+	}
+	pathComponents := strings.Split(wd, "/")
+	if len(pathComponents) > g.MinCommonPath {
+		// Reduce the path to the common path and check again
+		return g.findNode("/" + path.Join(pathComponents[len(pathComponents)-g.MinCommonPath:]...))
 
-		}
+	}
+	// Maybe even check the walker's history
+	return nil
+}
+
+func (g *Graph) Hint(id, wd string) string {
+	n := g.findNode(wd)
+	if n == nil {
 		// Reset suggestion for session
 		g.suggestionState[id] = 0
-		// Maybe even check the walker's history
 		return shrug
 	}
-	n := g.Nodes[wd]
 	// TODO: maybe we could use the walker to get the next action???
 	// walker := g.walkers[id]
 	// if walker == nil {
 	// 	return shrug
 	// }
 	// Use the suggestion state to cycle through the commands
+	if len(n.edges) == 0 {
+		// Reset suggestion for session
+		g.suggestionState[id] = 0
+		return shrug
+	}
 	best := n.getSortedCommands()[g.suggestionState[id]%len(n.edges)]
 	if best == "" {
 		// Reset suggestion for session
