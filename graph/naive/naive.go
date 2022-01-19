@@ -316,3 +316,17 @@ func (g *Graph) Load(filePath string) error {
 	}
 	return nil
 }
+
+func (g *Graph) Delete(id, wd, cmd string) {
+	n := g.findNode(wd)
+	if n == nil {
+		return
+	}
+	if _, ok := n.edges[cmd]; !ok {
+		return
+	}
+	delete(n.edges, cmd)
+	// Deleting an edge invalidates the suggestion offset, better to reset it
+	// here.
+	g.suggestionState[id] = 0
+}

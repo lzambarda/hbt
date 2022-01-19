@@ -12,14 +12,15 @@ import (
 )
 
 func TestNaive(t *testing.T) {
-	t.Run("Node", TestNaiveNode)
-	t.Run("Track", TestNaiveTrack)
-	t.Run("Hint", TestNaiveHint)
-	t.Run("Save", TestNaiveSave)
-	t.Run("Load", TestNaiveLoad)
+	t.Run("Node", testNaiveNode)
+	t.Run("Track", testNaiveTrack)
+	t.Run("Hint", testNaiveHint)
+	t.Run("Save", testNaiveSave)
+	t.Run("Load", testNaiveLoad)
+	t.Run("Delete", testNaiveDelete)
 }
 
-func TestNaiveNode(t *testing.T) {
+func testNaiveNode(t *testing.T) {
 	cmd1 := "c1"
 	cmd2 := "c2"
 	cmd3 := "c3"
@@ -33,7 +34,7 @@ func TestNaiveNode(t *testing.T) {
 	assert.EqualValues(t, []string{cmd2, cmd1, cmd3}, n.getSortedCommands())
 }
 
-func TestNaiveTrack(t *testing.T) {
+func testNaiveTrack(t *testing.T) {
 	g := NewGraph(10, 3)
 	id := "1"
 	wd := "d1"
@@ -83,12 +84,12 @@ func TestNaiveTrack(t *testing.T) {
 	assert.Equal(t, g.walkers[id][0], g.walkers[id][1])
 }
 
-func TestNaiveHint(t *testing.T) {
-	t.Run("Base", TestNaiveHintBasic)
-	t.Run("Breakdown", TestNaiveHintBasic)
+func testNaiveHint(t *testing.T) {
+	t.Run("Base", testNaiveHintBasic)
+	t.Run("Breakdown", testNaiveHintBasic)
 }
 
-func TestNaiveHintBasic(t *testing.T) {
+func testNaiveHintBasic(t *testing.T) {
 	g := NewGraph(10, 3)
 	id := "1"
 	wd1 := "d1"
@@ -125,7 +126,7 @@ func TestNaiveHintBasic(t *testing.T) {
 	assert.Equal(t, cmd2, got, "two commands, cmd2 greater hits, cycle hints 2")
 }
 
-func TestNaiveHintBreakdown(t *testing.T) {
+func testNaiveHintBreakdown(t *testing.T) {
 	g := NewGraph(10, 3)
 	id := "1"
 	wd1 := "/foo/bar/baz"
@@ -139,7 +140,7 @@ func TestNaiveHintBreakdown(t *testing.T) {
 	assert.Equal(t, cmd1, got, "different dir match")
 }
 
-func TestNaiveSave(t *testing.T) {
+func testNaiveSave(t *testing.T) {
 	runs := map[string]func(g *Graph){
 		"simple": func(g *Graph) {
 			g.Track("1", "dir1", "cmd1")
@@ -180,7 +181,7 @@ func TestNaiveSave(t *testing.T) {
 	}
 }
 
-func TestNaiveLoad(t *testing.T) {
+func testNaiveLoad(t *testing.T) {
 	runs := map[string]func(g *Graph){
 		"simple": func(g *Graph) {
 			g.Track("1", "dir1", "cmd1")
@@ -203,10 +204,26 @@ func TestNaiveLoad(t *testing.T) {
 			for id := range expected.walkers {
 				delete(expected.walkers, id)
 			}
+			// Reset the suggestion state as it is not loaded
+			for id := range expected.suggestionState {
+				delete(expected.suggestionState, id)
+			}
 			actual := NewGraph(10, 3)
 			err := actual.Load(path.Join("testdata", name+".json"))
 			assert.NoError(t, err)
 			assert.EqualValues(t, expected, actual)
 		})
 	}
+}
+
+func testNaiveDelete(t *testing.T) {
+	g := NewGraph(10, 3)
+	g.Track("123", "abc", "def")
+	assert.EqualValues(t, "def", g.Hint("123", "abc"))
+	g.Delete("123", "xxx", "def")
+	assert.EqualValues(t, "def", g.Hint("123", "abc"))
+	g.Delete("123", "abc", "xxx")
+	assert.EqualValues(t, "def", g.Hint("123", "abc"))
+	g.Delete("123", "abc", "def")
+	assert.EqualValues(t, shrug, g.Hint("123", "abc"))
 }

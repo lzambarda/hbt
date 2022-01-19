@@ -108,6 +108,12 @@ func handleConnection(c net.Conn, g graph.Graph) {
 			return
 		}
 		g.End(args[1])
+	case "del":
+		if len(args) != 4 {
+			fmt.Printf("wrong number of arguments, expected 4, got %d\n", len(args))
+			return
+		}
+		g.Delete(args[1], args[2], args[3])
 	default:
 		println("unknown command: " + args[0])
 	}

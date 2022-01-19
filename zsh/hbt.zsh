@@ -4,7 +4,7 @@ autoload -Uz add-zsh-hook
 export PATH="$HOME/Repositories/hbt/bin/darwin:$PATH"
 export HBT_CACHE_PATH="$HOME/dotfiles/hbt/"
 export HBT_PORT=43111
-export HBT_SAVE_INTERVAL="10m"
+export HBT_SAVE_INTERVAL="60m"
 
 function hbt_start() {
 	pid=$(pgrep hbtsrv)
@@ -60,4 +60,13 @@ function _hbt_clear() {
 }
 zle -N _hbt_clear
 bindkey '^?' _hbt_clear
+
+function _hbt_delsuggestion () {
+	if [[ ! -z ${POSTDISPLAY} ]]; then
+		$(echo -n "del\n$$\n$(pwd)\n$1" | nc localhost $HBT_PORT)
+		unset POSTDISPLAY
+	fi
+}
+zle -N _hbt_delsuggestion
+bindkey '^[[3~' _hbt_delsuggestion
 

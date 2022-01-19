@@ -6,4 +6,5 @@ type Graph interface {
 	End(id string)
 	Save(filePath string) error
 	Load(filePath string) error
+	Delete(id, wd, cmd string)
 }
