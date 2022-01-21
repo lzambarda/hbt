@@ -26,6 +26,7 @@ build:
 
 .PHONY: build_assets
 build_assets: build
+	@mkdir -p assets
 	@tar -zcvf assets/darwin-amd64-$(NAME).tgz ./bin/darwin/$(NAME)
 	@tar -zcvf assets/linux-amd64-$(NAME).tgz ./bin/linux/$(NAME)
 
