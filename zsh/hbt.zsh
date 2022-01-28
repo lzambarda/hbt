@@ -65,6 +65,8 @@ function _hbt_delsuggestion () {
 	if [[ ! -z ${POSTDISPLAY} ]]; then
 		$(echo -n "del\n$$\n$(pwd)\n$1" | nc localhost $HBT_PORT)
 		unset POSTDISPLAY
+	else
+		zle delete-char
 	fi
 }
 zle -N _hbt_delsuggestion
