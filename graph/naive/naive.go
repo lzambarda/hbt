@@ -5,10 +5,13 @@ package naive
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"sort"
 	"strings"
+
+	"github.com/lzambarda/hbt/internal"
 )
 
 //nolint:govet // Prefer this order of memory efficiency.
@@ -29,31 +32,20 @@ type cmdEdge struct {
 	cmd   string
 	score int
 }
-type sortedEdges []cmdEdge
 
-func (s sortedEdges) Len() int {
-	return len(s)
+func (c *cmdEdge) String() string {
+	return fmt.Sprintf("{ cmd: %q, score: %d }", c.cmd, c.score)
 }
 
-func (s sortedEdges) Less(i, j int) bool {
-	return s[i].score > s[j].score
-}
-
-func (s sortedEdges) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (n *node) getSortedCommands() []string {
-	var sorted = make(sortedEdges, 0, len(n.edges))
+func (n *node) getSortedEdges() []*cmdEdge {
+	var sorted = make([]*cmdEdge, 0, len(n.edges))
 	for cmd, e := range n.edges {
-		sorted = append(sorted, cmdEdge{cmd, e.Hits})
+		sorted = append(sorted, &cmdEdge{cmd, e.Hits})
 	}
-	result := make([]string, len(sorted))
-	sort.Sort(sorted)
-	for i, s := range sorted {
-		result[i] = s.cmd
-	}
-	return result
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].score > sorted[j].score
+	})
+	return sorted
 }
 
 func (n *node) getBestCommand() string {
@@ -222,7 +214,16 @@ func (g *Graph) Hint(id, wd string) string {
 		g.suggestionState[id] = 0
 		return shrug
 	}
-	best := n.getSortedCommands()[g.suggestionState[id]%len(n.edges)]
+	sorted := n.getSortedEdges()
+	bestIndex := g.suggestionState[id] % len(n.edges)
+	if internal.Debug {
+		fmt.Println("Sorted Edges:")
+		for i, s := range sorted {
+			fmt.Printf("  [%d] %s\n", i, s)
+		}
+		fmt.Printf("Best index %d %% %d = %d\n", g.suggestionState[id], len(n.edges), bestIndex)
+	}
+	best := sorted[bestIndex].cmd
 	if best == "" {
 		// Reset suggestion for session
 		g.suggestionState[id] = 0

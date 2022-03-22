@@ -31,7 +31,11 @@ func testNaiveNode(t *testing.T) {
 	n.edges[cmd2] = &edge{Hits: 3}
 	n.edges[cmd3] = &edge{Hits: 1}
 	assert.Equal(t, cmd2, n.getBestCommand())
-	assert.EqualValues(t, []string{cmd2, cmd1, cmd3}, n.getSortedCommands())
+	e := n.getSortedEdges()
+	assert.Len(t, e, 3)
+	assert.EqualValues(t, cmd2, e[0].cmd)
+	assert.EqualValues(t, cmd1, e[1].cmd)
+	assert.EqualValues(t, cmd3, e[2].cmd)
 }
 
 func testNaiveTrack(t *testing.T) {

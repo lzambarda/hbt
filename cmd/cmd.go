@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/lzambarda/hbt/graph/naive"
@@ -11,10 +12,12 @@ import (
 )
 
 var (
-	root = &cli.App{
+	g         server.Graph
+	cachePath string
+	root      = &cli.App{
 		Name:        "hbt",
 		Usage:       "a zsh suggestion system",
-		Description: `Running hbt will spawn a TCP server listening on the local port 43111 (can be changed with HBT_PORT).`,
+		Description: `Spawn a TCP server listening on the local port 43111 (can be changed with HBT_PORT).`,
 		Version:     internal.Version,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -49,14 +52,29 @@ var (
 				EnvVars:     []string{internal.SaveIntervalName},
 			},
 		},
+		Before: func(_ *cli.Context) error {
+			cachePath = path.Join(internal.CachePath, internal.CacheName)
+			g = naive.NewGraph(10, 3)
+			return g.Load(cachePath)
+		},
+		// By default start a server
 		Action: func(_ *cli.Context) error {
-			cachePath := path.Join(internal.CachePath, internal.CacheName)
-			g := naive.NewGraph(10, 3)
-			err := g.Load(cachePath)
-			if err != nil {
-				return err
-			}
 			return server.Start(g, cachePath)
+		},
+		Commands: []*cli.Command{
+			{
+				Name:    "cli",
+				Aliases: []string{"c"},
+				Usage:   "run a command without starting a server",
+				Action: func(c *cli.Context) error {
+					result, err := server.ProcessCommand(c.Args().Slice(), g)
+					if err != nil {
+						return err
+					}
+					fmt.Println(result)
+					return nil
+				},
+			},
 		},
 	}
 )

@@ -3,8 +3,8 @@ help: ## Show this
 	@grep -E '^[0-9a-zA-Z_-]+:(.*?## .*|[a-z _0-9]+)?$$' Makefile | sort | awk 'BEGIN {FS = ":(.*## |[\t ]*)"}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 NAME:=hbtsrv
-BUILD_TAG:=$(shell git describe --tags)
-BUILDFLAGS:="-s -w -X github.com/lzambarda/hbt/internal.Version=$(BUILD_TAG)"
+build_tag:=$(shell git describe --tags 2> /dev/null)
+BUILDFLAGS:="-s -w -X github.com/lzambarda/hbt/internal.Version=$(build_tag)"
 
 .PHONY: dependencies
 dependencies: ## Install dependencies requried for development operations.

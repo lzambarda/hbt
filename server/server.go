@@ -91,33 +91,49 @@ func handleConnection(c net.Conn, g Graph) {
 	if internal.Debug {
 		fmt.Println(args)
 	}
+	result, err := ProcessCommand(args, g)
+	if err != nil {
+		println(err)
+		return
+	}
+	if result != "" {
+		_, err = c.Write([]byte(result))
+		if err != nil {
+			println(err)
+		}
+	}
+}
+
+// ProcessCommand processes the arguments and runs a command on the given Graph.
+func ProcessCommand(args []string, g Graph) (result string, err error) {
+	if len(args) == 0 {
+		return "", errors.New("missing command")
+	}
 	switch args[0] {
 	case "track":
 		if len(args) != 4 {
-			fmt.Printf("wrong number of arguments, expected 4, got %d\n", len(args))
-			return
+			return "", fmt.Errorf("wrong number of arguments, expected 4, got %d", len(args))
 		}
 		g.Track(args[1], args[2], args[3])
 	case "hint":
-		if len(args) != 4 {
-			fmt.Printf("wrong number of arguments, expected 4, got %d\n", len(args))
-			return
+		if len(args) != 3 {
+			return "", fmt.Errorf("wrong number of arguments, expected 3, got %d", len(args))
 		}
 		// args[3] is unused for now
-		c.Write([]byte(g.Hint(args[1], args[2]))) //nolint:errcheck,gosec // It is okay.
+		hint := g.Hint(args[1], args[2]) //nolint:errcheck,gosec // It is okay.
+		return hint, nil
 	case "end":
 		if len(args) != 2 {
-			fmt.Printf("wrong number of arguments, expected 2, got %d\n", len(args))
-			return
+			return "", fmt.Errorf("wrong number of arguments, expected 2, got %d", len(args))
 		}
 		g.End(args[1])
 	case "del":
 		if len(args) != 4 {
-			fmt.Printf("wrong number of arguments, expected 4, got %d\n", len(args))
-			return
+			return "", fmt.Errorf("wrong number of arguments, expected 4, got %d", len(args))
 		}
 		g.Delete(args[1], args[2], args[3])
 	default:
-		println("unknown command: " + args[0])
+		return "", fmt.Errorf("unknown command: %q", args[0])
 	}
+	return "", nil
 }
