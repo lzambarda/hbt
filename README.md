@@ -40,7 +40,21 @@ Since a ~~picture~~ GIF is worth a thousand words:
 
 ### Manual interaction with hbt
 
+```bash
+hbtsrv --help
+```
+
 [`zsh/hbt.zsh`](./zsh/hbt.zsh) provides some functions you can use to interact with a running hbt server.
+
+Otherwise you can use the `cli` command to manually execute certain commands without interacting with a server (cache and graph will be the same as the server's).
+
+Example:
+
+```bash
+hbtsrv --debug cli hint $$ $(pwd)
+```
+
+See [server/server.go](server/server.go) for the list of supported commands.
 
 ## Why the mix of go and shell functions?
 
