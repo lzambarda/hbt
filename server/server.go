@@ -8,6 +8,8 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -93,13 +95,13 @@ func handleConnection(c net.Conn, g Graph) {
 	}
 	result, err := ProcessCommand(args, g)
 	if err != nil {
-		println(err)
+		println(err.Error())
 		return
 	}
 	if result != "" {
 		_, err = c.Write([]byte(result))
 		if err != nil {
-			println(err)
+			println(err.Error())
 		}
 	}
 }
@@ -132,6 +134,15 @@ func ProcessCommand(args []string, g Graph) (result string, err error) {
 			return "", fmt.Errorf("wrong number of arguments, expected 4, got %d", len(args))
 		}
 		g.Delete(args[1], args[2], args[3])
+	case "prune":
+		println("pruning...")
+		removed, err := g.Prune()
+		if err != nil {
+			return "", err
+		}
+		println("saving...")
+		err = g.Save(path.Join(internal.CachePath, internal.CacheName))
+		return strconv.FormatBool(removed), err
 	default:
 		return "", fmt.Errorf("unknown command: %q", args[0])
 	}

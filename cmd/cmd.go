@@ -54,7 +54,7 @@ var (
 		},
 		Before: func(_ *cli.Context) error {
 			cachePath = path.Join(internal.CachePath, internal.CacheName)
-			g = naive.NewGraph(10, 3)
+			g = naive.NewGraph(10, 3, nil)
 			return g.Load(cachePath)
 		},
 		// By default start a server

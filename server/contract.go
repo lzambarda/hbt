@@ -17,4 +17,9 @@ type Graph interface {
 	Save(filePath string) error
 	// Load initialises the graph with a serialiastion at the give file path.
 	Load(filePath string) error
+	// Prune removes unused edges. Should return whether any edge has been
+	// removed.
+	// If the graph implementation has no prune strategy, it should return
+	// false,nil.
+	Prune() (removed bool, err error)
 }
