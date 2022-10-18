@@ -75,5 +75,7 @@ Given that the functions use zsh hooks which are executed at every command, I di
 - [x] Partial path search
 - [ ] Better error catching
 - [ ] More dynamic graph parameters (env variables or flags)
-- [ ] Do not store sensistive information (is it even possible to detect it?)
+- [ ] Do not store certain commands
+  - [ ] `cd` commands ?
+  - [ ] Sensistive information (is it even possible to detect it?)
 - [ ] Identify "workflows" by using the walker model (for the naive implementation)
