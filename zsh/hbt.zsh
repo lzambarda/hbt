@@ -40,7 +40,7 @@ add-zsh-hook preexec _hbt_track
 # or complete words, that are before cursor only (like in tcsh)
 function _hbt_search () {
 	if [[ -z ${LBUFFER// } ]]; then
-		suggestion=$(echo -n "hint\n$$\n$(pwd)\n$1" | nc localhost $HBT_PORT)
+		suggestion=$(echo -n "hint\n$$\n$(pwd)" | nc localhost $HBT_PORT)
 		POSTDISPLAY="${suggestion#$BUFFER}"
 		_zsh_autosuggest_highlight_reset
 		_zsh_autosuggest_highlight_apply

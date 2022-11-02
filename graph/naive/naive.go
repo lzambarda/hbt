@@ -1,6 +1,7 @@
-//nolint:godox // Okay for now.
 // Package naive contains a simplistic implementation of a suggestion graph.
 // Nothing too fancy.
+//
+//nolint:godox // Okay for now.
 package naive
 
 import (
@@ -21,8 +22,9 @@ type edge struct {
 	To   *node `json:"t"`
 }
 
-//nolint:govet // Prefer this order of memory efficiency.
 // cmd -> node.
+//
+//nolint:govet // Prefer this order of memory efficiency.
 type node struct {
 	id    int
 	edges map[string]*edge
@@ -38,7 +40,7 @@ func (c *cmdEdge) String() string {
 }
 
 func (n *node) getSortedEdges() []*cmdEdge {
-	var sorted = make([]*cmdEdge, 0, len(n.edges))
+	sorted := make([]*cmdEdge, 0, len(n.edges))
 	for cmd, e := range n.edges {
 		sorted = append(sorted, &cmdEdge{cmd, e.Hits})
 	}
@@ -49,7 +51,7 @@ func (n *node) getSortedEdges() []*cmdEdge {
 }
 
 func (n *node) getBestCommand() string {
-	var max = -1
+	max := -1
 	var best string
 	for cmd, e := range n.edges {
 		if e.Hits > max {
@@ -82,6 +84,7 @@ func (w walker) progress(next *walkerNode) walker {
 // Graph is a naive implementation of a heuristic system.
 // The zero value of this structure cannot be used. Please use NewGraph to
 // obtain a valid one.
+//
 //nolint:govet // Prefer this order of memory efficiency.
 type Graph struct {
 	// wd -> node
