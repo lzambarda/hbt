@@ -93,13 +93,13 @@ func handleConnection(c net.Conn, g Graph) {
 	}
 	result, err := ProcessCommand(args, g)
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 		return
 	}
 	if result != "" {
 		_, err = c.Write([]byte(result))
 		if err != nil {
-			println(err)
+			fmt.Println(err)
 		}
 	}
 }
@@ -109,6 +109,7 @@ func ProcessCommand(args []string, g Graph) (result string, err error) {
 	if len(args) == 0 {
 		return "", errors.New("missing command")
 	}
+
 	switch args[0] {
 	case "track":
 		if len(args) != 4 {
